@@ -1,13 +1,12 @@
 import scala.util.Using
 
 import org.antlr.v4.runtime.*
-import org.antlr.v4.runtime.tree.ParseTree
+import syntax.Statement
+import util.*
 import visitors.*
 
 import com.aetion.acal.sl.parser.DslParser.ProgContext
 import com.aetion.acal.sl.parser.*
-import util.*
-import syntax.Statement
 
 object Compiler:
   def evaluate(program: String): Unit =
