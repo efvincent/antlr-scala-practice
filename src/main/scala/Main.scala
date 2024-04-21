@@ -16,14 +16,17 @@ object Compiler:
       tree <- parser.prog() |> opt
       visitor = new EvalVisitor
       ast <- visitor.visit(tree) |> opt
-      _ = printResult(ast, parser, tree)
+      smart = SmartTreeWalker.walkTree(tree)
+      _     = printResult(ast, smart, parser, tree)
     } yield ()
 
-    def printResult(s: Statement, p: Parser, c: ProgContext) =
+    def printResult(s: Statement, s2: Statement, p: Parser, c: ProgContext) =
       println("\n---------------- tree ------------------")
       println(c.toStringTree(p))
       println("\n---------------- ast  ------------------")
       println(s"$s")
+      println("\n---------------- ast 2 ------------------")
+      println(s"$s2")
       println("\ndone")
 
   def evalResource(fn: String) =

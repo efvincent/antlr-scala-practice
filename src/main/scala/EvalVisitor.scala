@@ -18,7 +18,7 @@ class EvalVisitor extends DslBaseVisitor[Option[Statement]]:
   // because of the fact that a `prog` is more than one statement. Without the override
   // we end up with only the first statement
   override def visitProg(ctx: ProgContext): Option[Statement] =
-    flatMapJlist(ctx.stat(), visit, Statement.Block.apply)
+    flatMapJlist(ctx.stat(), visit) |> Statement.Block.apply |> Some.apply
 
   // whenever a non-terminal rule appears in other rules, we need a non-overridden
   // visit function for that rule. In this case, expr is a rule that is used/referred
