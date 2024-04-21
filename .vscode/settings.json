@@ -1,0 +1,11 @@
+{
+  "files.watcherExclude": {
+    "**/target": true
+  },
+  "explorer.excludeGitIgnore": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "[antlr]": {
+    "editor.formatOnSave": false
+  }
+}
