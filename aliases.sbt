@@ -5,6 +5,7 @@ addCommandAlias("ll", "projects")
 addCommandAlias("ls", "projects")
 addCommandAlias("cd", "project")
 addCommandAlias("root", "cd playground")
+addCommandAlias("gen", "Antlr4 / antlr4Generate")
 addCommandAlias("c", "compile")
 addCommandAlias("ca", "Test / compile")
 addCommandAlias("t", "test")
@@ -26,19 +27,22 @@ addCommandAlias(
 
 onLoadMessage +=
   s"""|
-      |╭─────────────────────────────────╮
-      |│     List of defined ${styled("aliases")}     │
-      |├─────────────┬───────────────────┤
-      |│ ${styled("l")} | ${styled("ll")} | ${styled("ls")} │ projects          │
-      |│ ${styled("cd")}          │ project           │
-      |│ ${styled("root")}        │ cd root           │
-      |│ ${styled("c")}           │ compile           │
-      |│ ${styled("ca")}          │ compile all       │
-      |│ ${styled("t")}           │ test              │
-      |│ ${styled("r")}           │ run               │
-      |│ ${styled("rs")}          │ reStart           │
-      |│ ${styled("s")}           │ reStop            │
-      |│ ${styled("styleCheck")}  │ fmt & fix check   │
-      |│ ${styled("styleFix")}    │ fix then fmt      │
-      |│ ${styled("up2date")}     │ dependencyUpdates │
-      |╰─────────────┴───────────────────╯""".stripMargin
+      |╭──────────────────────────────────╮
+      |│     List of defined ${styled("aliases")}      │
+      |├─────────────┬────────────────────┤
+      |│ ${styled("l")} | ${styled("ll")} | ${styled(
+       "ls"
+     )} │ projects           │
+      |│ ${styled("cd")}          │ project            │
+      |│ ${styled("root")}        │ cd root            │
+      |│ ${styled("gen")}         │ regen parser/lexer │
+      |│ ${styled("c")}           │ compile            │
+      |│ ${styled("ca")}          │ compile all        │
+      |│ ${styled("t")}           │ test               │
+      |│ ${styled("r")}           │ run                │
+      |│ ${styled("rs")}          │ reStart            │
+      |│ ${styled("s")}           │ reStop             │
+      |│ ${styled("styleCheck")}  │ fmt & fix check    │
+      |│ ${styled("styleFix")}    │ fix then fmt       │
+      |│ ${styled("up2date")}     │ dependencyUpdates  │
+      |╰─────────────┴────────────────────╯""".stripMargin

@@ -13,4 +13,4 @@ enum Expr:
   case EId(name: String)
 
 enum BinOp:
-  case Mul, Div, Add, Sub
+  case Mul, Div, Add, Sub, Exponent

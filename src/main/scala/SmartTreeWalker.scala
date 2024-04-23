@@ -1,7 +1,6 @@
 package visitors
 
-import scala.annotation.targetName
-import org.antlr.v4.runtime.tree.*
+import org.antlr.v4.runtime.*
 import syntax.BinOp.*
 import syntax.Expr.*
 import syntax.Statement.*
@@ -10,55 +9,73 @@ import util.*
 
 import com.aetion.acal.sl.parser.DslParser.*
 import com.aetion.acal.sl.parser.*
-import org.antlr.v4.runtime.Token
 
 object SmartTreeWalker:
 
-  def walkTree(tree: DslParser.ProgContext): Statement =
-    val stmts = tree.stat() |> unJList
+  def walkTree(tree: ParserRuleContext): Statement =
+    val stmts = rulesFrom(tree, RULE_stat)
     Block(stmts.flatMap(walkStat))
 
-  def walkStat(stat: StatContext): Option[Statement] =
+  def walkStat(stat: ParserRuleContext): Option[Statement] =
     stat match
       case ctx: PrintExprContext =>
-        walkExpr(ctx.expr.nn).map(Print.apply)
+        for {
+          exprCtx <- ruleFrom(ctx, RULE_expr)
+          expr    <- walkExpr(exprCtx)
+        } yield Print(expr)
 
       case ctx: AssignContext =>
         for {
-          id   <- ctx.ID.nn.getText |> opt
-          eCtx <- ctx.expr |> opt
-          expr <- walkExpr(eCtx)
-        } yield Assign(id, expr)
+          varName <- strFrom(ctx, ID)
+          eCtx    <- ruleFrom(ctx, RULE_expr)
+          expr    <- walkExpr(eCtx)
+        } yield Assign(varName, expr)
 
       case ctx: ClearContext => Some(Clear)
 
+      case ctx: BlockStmtContext =>
+        for {
+          blk <- ruleFrom(ctx, RULE_block)
+          stmts = rulesFrom(blk, RULE_stat)
+        } yield Block(stmts.flatMap(walkStat))
+
       case ctx: BlankContext => None
 
-  private def walkExpr[T <: ExprContext](expr: T): Option[Expr] =
+  private def walkExpr(expr: ParserRuleContext): Option[Expr] =
     expr match
-      case ctx: IntContext    => intFrom(ctx, INT).map(EInt.apply)
-      case ctx: IdContext     => strFrom(ctx, ID).map(EId.apply)
-      case ctx: ParensContext => walkExpr(ctx.expr.nn)
+      case ctx: IntContext =>
+        intFrom(ctx, INT).map(EInt.apply)
+
+      case ctx: IdContext =>
+        strFrom(ctx, ID).map(EId.apply)
+
+      case ctx: ParensContext =>
+        ruleFrom(ctx, RULE_expr).flatMap(walkExpr)
 
       case ctx: AddSubContext =>
-        for {
-          op  <- ctx.op |> opt
-          lhs <- walkExpr(ctx.expr(0).nn)
-          rhs <- walkExpr(ctx.expr(1).nn)
-        } yield parseBinOp(op, lhs, rhs)
+        (ctx.op |> opt).flatMap(parseBinOp(ctx))
 
       case ctx: MulDivContext =>
-        for {
-          op  <- ctx.op |> opt
-          lhs <- walkExpr(ctx.expr(0).nn)
-          rhs <- walkExpr(ctx.expr(1).nn)
-        } yield parseBinOp(op, lhs, rhs)
+        (ctx.op |> opt).flatMap(parseBinOp(ctx))
 
-  def parseBinOp(op: Token, lhs: Expr, rhs: Expr): EBinOp =
-    val operator = op.getType |> opt match
-      case Some(MUL) => Mul
-      case Some(DIV) => Div
-      case Some(ADD) => Add
-      case Some(SUB) => Sub
-      case _         => ??? // should never happen
-    EBinOp(lhs, rhs, operator)
+      case ctx: ExpContext =>
+        for {
+          termNode <- getTerminal(ctx, CARET, 0)
+          token    <- termNode.getSymbol |> opt
+          binop    <- parseBinOp(ctx)(token)
+        } yield binop
+
+  def parseBinOp[T <: ParserRuleContext](ctx: T)(op: Token): Option[EBinOp] =
+    for {
+      lhs  <- ruleFrom(ctx, RULE_expr, 0).flatMap(walkExpr)
+      rhs  <- ruleFrom(ctx, RULE_expr, 1).flatMap(walkExpr)
+      opId <- op.getType |> opt
+      operation =
+        opId match
+          case MUL   => Mul
+          case DIV   => Div
+          case ADD   => Add
+          case SUB   => Sub
+          case CARET => Exponent
+          case _     => ??? // should never happen
+    } yield EBinOp(lhs, rhs, operation)

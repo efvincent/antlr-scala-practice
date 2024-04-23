@@ -1,7 +1,16 @@
 package util
 
 import scala.jdk.CollectionConverters.*
-import org.antlr.v4.runtime.ParserRuleContext
+
+import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.tree.TerminalNode
+import zio.prelude.*
+
+// scalafix:off DisableSyntax.null
+// scalafix:off DisableSyntax.==
+// scalafix:off DisableSyntax.defaultArgs
+// scalafix:off DisableSyntax.asInstanceOf
+// scalafix:off DisableSyntax.isInstanceOf
 
 implicit class PipeOps[A](val a: A):
   inline def |>[B](f: A => B): B = f(a)
@@ -45,9 +54,9 @@ def flatMapJlist2[T, U](
   lst.flatMap(fmapper)
 
 def opt[A](a: Option[A] | Null): Option[A] =
-  if a == null
-  then None
-  else a
+  a match
+    case None | null => None
+    case Some(value) => Some(value)
 
 /** Converts a java style nullable value of type `A` into an `Option[A]`
   *
@@ -57,10 +66,14 @@ def opt[A](a: Option[A] | Null): Option[A] =
 def opt[A](a: A | Null): Option[A] =
   if a == null then None else Some(a)
 
+def getTerminal[T <: ParserRuleContext](ctx: T, tokenId: Int, idx: Int = 0)
+    : Option[TerminalNode] =
+  ctx.getToken(tokenId, idx) |> opt
+
 def strFrom[T <: ParserRuleContext](ctx: T, tokenId: Int, idx: Int = 0)
     : Option[String] =
   for {
-    tkn <- ctx.getToken(tokenId, idx) |> opt
+    tkn <- getTerminal(ctx, tokenId, idx) |> opt
     txt <- tkn.getText() |> opt
   } yield txt
 
@@ -70,3 +83,39 @@ def intFrom[T <: ParserRuleContext](ctx: T, tokenId: Int, idx: Int = 0)
     txt <- strFrom(ctx, tokenId, idx)
     n   <- txt.toIntOption
   } yield n
+
+def rulesFrom[T <: ParserRuleContext](
+    ctx: T,
+    ruleId: Int): List[ParserRuleContext] =
+  val subs = ctx.children |> unJList
+  subs
+    .filter(r =>
+      r.isInstanceOf[ParserRuleContext] && r
+        .asInstanceOf[ParserRuleContext]
+        .getRuleIndex === ruleId
+    )
+    .map(_.asInstanceOf[ParserRuleContext])
+
+def ruleFrom[T <: ParserRuleContext](
+    ctx: T,
+    ruleId: Int,
+    idx: Int = 0): Option[ParserRuleContext] =
+  val subs = ctx.children |> unJList
+  val rules =
+    subs.filter(sub =>
+      if sub.isInstanceOf[RuleContext] then
+        val rule: RuleContext = sub.asInstanceOf[T]
+        rule.getRuleIndex === ruleId
+      else false
+    )
+  if rules.isEmpty || idx >= rules.size
+  then None
+  else Some(rules(idx).asInstanceOf[T])
+
+def ruleFromOpt[T <: ParserRuleContext](
+    ctx: Option[T],
+    ruleId: Int,
+    idx: Int = 0): Option[ParserRuleContext] =
+  ctx match
+    case Some(ctx1) => ruleFrom(ctx1, ruleId, idx)
+    case None       => None
