@@ -1,8 +1,5 @@
-## sbt project compiled with Scala 3
+# Practicing ANTLR2  
 
-### Usage
-
-This is a normal sbt project. You can compile code with `sbt compile`, run it with `sbt run`, and `sbt console` will start a Scala 3 REPL.
-
-For more information on the sbt-dotty plugin, see the
-[scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).
+- This has most of the SBT setup from the ACAL project
+- Start sbt in this directory and you'll see a list of aliases for the SBT console
+- Some of the helper functions that make writing a functional AST tree walker for the ANTLR generated parser have changed names or evolved from this project to what you see in ACAL
